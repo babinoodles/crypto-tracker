@@ -3,7 +3,7 @@
 // Danh sách các coin theo CoinGecko id
 const coins = ["bitcoin", "ethereum", "ripple", "solana", "cardano"];
 
-// Mapping để chuyển từ CoinGecko id sang mã viết tắt và URL icon
+// Mapping từ CoinGecko id sang mã viết tắt và URL icon (dựa trên ví dụ từ OKX)
 const coinMapping = {
   bitcoin: { symbol: "BTC", icon: "https://cryptoicons.org/api/icon/btc/32" },
   ethereum: { symbol: "ETH", icon: "https://cryptoicons.org/api/icon/eth/32" },
@@ -26,9 +26,10 @@ async function fetchCryptoData() {
   }
 }
 
-// Hàm định dạng giá: nếu phần thập phân là .00 thì bỏ, nếu không hiển thị 4 chữ số sau dấu .
+// Hàm định dạng giá:
+// Nếu phần thập phân là ".00" thì bỏ đi, nếu không hiển thị 4 số sau dấu chấm.
 function formatPrice(price) {
-  let fixedTwo = price.toFixed(2);
+  const fixedTwo = price.toFixed(2);
   if (fixedTwo.endsWith(".00")) {
     return "$" + price.toFixed(0);
   } else {
@@ -49,11 +50,9 @@ async function updateTable() {
     if (coinData) {
       const tr = document.createElement("tr");
       
-      // Cột Coin: hiển thị icon và mã coin
+      // Cột 1: Coin (icon + mã viết tắt)
       const tdCoin = document.createElement("td");
-      
-      // Tạo thẻ img cho icon
-      let mapping = coinMapping[coinId];
+      const mapping = coinMapping[coinId];
       if (mapping && mapping.icon) {
         const img = document.createElement("img");
         img.src = mapping.icon;
@@ -61,24 +60,82 @@ async function updateTable() {
         img.className = "coin-icon";
         tdCoin.appendChild(img);
       }
-      
-      // Thêm mã coin
       const spanCoin = document.createElement("span");
       spanCoin.textContent = mapping ? mapping.symbol : coinId.toUpperCase();
       tdCoin.appendChild(spanCoin);
       tr.appendChild(tdCoin);
       
-      // Cột Giá
+      // Cột 2: Giá hiện tại (USD) - dùng hàm formatPrice
       const tdPrice = document.createElement("td");
       tdPrice.textContent = formatPrice(coinData.usd);
       tr.appendChild(tdPrice);
       
-      // Cột % thay đổi 24h
+      // Cột 3: % Thay đổi 24h
       const tdChange = document.createElement("td");
       const change = coinData.usd_24h_change;
       tdChange.textContent = change ? change.toFixed(2) + "%" : "N/A";
       tdChange.style.color = change >= 0 ? "green" : "red";
       tr.appendChild(tdChange);
+      
+      // Cột 4: Order (Dropdown: Buy/Sell)
+      const tdOrder = document.createElement("td");
+      const selectOrder = document.createElement("select");
+      const optionEmpty = document.createElement("option");
+      optionEmpty.value = "";
+      optionEmpty.textContent = "--";
+      selectOrder.appendChild(optionEmpty);
+      const optionBuy = document.createElement("option");
+      optionBuy.value = "buy";
+      optionBuy.textContent = "Buy";
+      selectOrder.appendChild(optionBuy);
+      const optionSell = document.createElement("option");
+      optionSell.value = "sell";
+      optionSell.textContent = "Sell";
+      selectOrder.appendChild(optionSell);
+      tdOrder.appendChild(selectOrder);
+      tr.appendChild(tdOrder);
+      
+      // Cột 5: Entry Price (input)
+      const tdEntry = document.createElement("td");
+      const inputEntry = document.createElement("input");
+      inputEntry.type = "number";
+      inputEntry.step = "any";
+      inputEntry.placeholder = "Nhập giá";
+      tdEntry.appendChild(inputEntry);
+      tr.appendChild(tdEntry);
+      
+      // Cột 6: Leverage (input)
+      const tdLeverage = document.createElement("td");
+      const inputLeverage = document.createElement("input");
+      inputLeverage.type = "number";
+      inputLeverage.min = "1";
+      inputLeverage.max = "99";
+      inputLeverage.placeholder = "1-99";
+      tdLeverage.appendChild(inputLeverage);
+      tr.appendChild(tdLeverage);
+      
+      // Cột 7: Kết quả Entry: Hiện giá hiện tại và % thay đổi so với entry, nhân với đòn bẩy
+      const tdResult = document.createElement("td");
+      // Hàm cập nhật kết quả sẽ được gọi bên dưới (tùy thuộc vào input)
+      tdResult.textContent = "N/A";
+      tr.appendChild(tdResult);
+      
+      // Khi có thay đổi ở Entry Price hoặc Leverage, cập nhật cột kết quả
+      function updateResult() {
+        const entry = parseFloat(inputEntry.value);
+        const leverage = parseInt(inputLeverage.value);
+        if (!isNaN(entry) && !isNaN(leverage) && entry > 0) {
+          let percentChange = ((coinData.usd - entry) / entry) * 100;
+          let leveragedChange = percentChange * leverage;
+          tdResult.textContent = formatPrice(coinData.usd) + " / " + leveragedChange.toFixed(2) + "%";
+          tdResult.style.color = leveragedChange >= 0 ? "green" : "red";
+        } else {
+          tdResult.textContent = "N/A";
+          tdResult.style.color = "#fff";
+        }
+      }
+      inputEntry.addEventListener("input", updateResult);
+      inputLeverage.addEventListener("input", updateResult);
       
       tbody.appendChild(tr);
     }
