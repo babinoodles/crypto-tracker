@@ -2,9 +2,9 @@
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  /* Nền gradient mượt mà */
   background: linear-gradient(135deg, #1F1F1F, #333333);
   color: #fff;
+  font-size: 16px; /* 1rem = 16px */
 }
 
 header {
@@ -16,8 +16,7 @@ header h1 {
   margin: 0;
   font-size: 2.5rem;
   font-weight: 700;
-  /* Màu vàng gold / champagne */
-  color: #FFD700; /* hoặc dùng #F7E7CE */
+  color: #FFD700; /* Vàng gold */
 }
 
 #last-updated {
@@ -28,7 +27,7 @@ header h1 {
 
 main {
   padding: 20px;
-  max-width: 1000px;
+  max-width: 90%;
   margin: 0 auto;
   overflow-x: auto;
 }
@@ -49,7 +48,6 @@ th {
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-/* Style cho icon coin */
 .coin-icon {
   vertical-align: middle;
   margin-right: 6px;
@@ -57,7 +55,6 @@ th {
   height: 24px;
 }
 
-/* Style cho input số */
 input[type="number"] {
   background-color: #333;
   border: none;
@@ -74,11 +71,30 @@ footer {
   font-size: 0.9rem;
   color: #A0A0A0;
 }
-/* CSS cho icon của Coin */
-.coin-icon {
-  vertical-align: middle;
-  margin-right: 6px;
-  width: 24px;
-  height: 24px;
-}
 
+/* Responsive adjustments for mobile devices */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+  
+  header h1 {
+    font-size: 2rem;
+  }
+  
+  #last-updated {
+    font-size: 0.9rem;
+  }
+  
+  table, th, td {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+  
+  /* Cách sắp xếp header theo hàng dọc nếu cần */
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
