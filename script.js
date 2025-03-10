@@ -82,16 +82,18 @@ async function updateTable() {
     
     // Cột 1: Coin (icon + mã)
     const tdCoin = document.createElement("td");
-    if (mapping && mapping.icon) {
-      const img = document.createElement("img");
-      img.src = mapping.icon;
-      img.alt = mapping.symbol;
-      img.className = "coin-icon";
-      img.onerror = function() {
-        this.style.display = 'none';
-      };
-      tdCoin.appendChild(img);
-    }
+   if (mapping && mapping.icon) {
+  const img = document.createElement("img");
+  img.src = mapping.icon;
+  img.alt = mapping.symbol;
+  img.className = "coin-icon";
+  // Nếu gặp lỗi tải, ẩn đi
+  img.onerror = function() {
+    this.style.display = 'none';
+  };
+  tdCoin.appendChild(img);
+}
+
     const spanCoin = document.createElement("span");
     spanCoin.textContent = mapping ? mapping.symbol : coinId.toUpperCase();
     tdCoin.appendChild(spanCoin);
