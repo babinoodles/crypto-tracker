@@ -16,7 +16,8 @@ header h1 {
   margin: 0;
   font-size: 2.5rem;
   font-weight: 700;
-  color: #FFD700; /* Màu vàng gold cho tiêu đề */
+  /* Màu vàng gold / champagne */
+  color: #FFD700; /* hoặc dùng #F7E7CE */
 }
 
 #last-updated {
@@ -27,8 +28,9 @@ header h1 {
 
 main {
   padding: 20px;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
+  overflow-x: auto;
 }
 
 table {
@@ -47,15 +49,28 @@ th {
   background-color: rgba(0, 0, 0, 0.2);
 }
 
+/* Style cho icon coin */
+.coin-icon {
+  vertical-align: middle;
+  margin-right: 6px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Style cho input số */
+input[type="number"] {
+  background-color: #333;
+  border: none;
+  color: #fff;
+  padding: 4px;
+  text-align: center;
+  border-radius: 4px;
+  width: 80px;
+}
+
 footer {
   text-align: center;
   padding: 10px;
   font-size: 0.9rem;
   color: #A0A0A0;
-}
-
-/* Một số style cho ảnh icon coin */
-.coin-icon {
-  vertical-align: middle;
-  margin-right: 6px;
 }
