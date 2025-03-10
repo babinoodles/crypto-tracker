@@ -1,8 +1,18 @@
 // script.js
 
-// Danh sách các coin (CoinGecko id)
+// Danh sách các coin theo CoinGecko id
 const coins = ["bitcoin", "ethereum", "ripple", "solana", "cardano"];
 
+// Mapping để chuyển từ CoinGecko id sang mã viết tắt và URL icon
+const coinMapping = {
+  bitcoin: { symbol: "BTC", icon: "https://cryptoicons.org/api/icon/btc/32" },
+  ethereum: { symbol: "ETH", icon: "https://cryptoicons.org/api/icon/eth/32" },
+  ripple: { symbol: "XRP", icon: "https://cryptoicons.org/api/icon/xrp/32" },
+  solana: { symbol: "SOL", icon: "https://cryptoicons.org/api/icon/sol/32" },
+  cardano: { symbol: "ADA", icon: "https://cryptoicons.org/api/icon/ada/32" }
+};
+
+// Hàm lấy dữ liệu từ CoinGecko
 async function fetchCryptoData() {
   const ids = coins.join(",");
   const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
@@ -16,6 +26,17 @@ async function fetchCryptoData() {
   }
 }
 
+// Hàm định dạng giá: nếu phần thập phân là .00 thì bỏ, nếu không hiển thị 4 chữ số sau dấu .
+function formatPrice(price) {
+  let fixedTwo = price.toFixed(2);
+  if (fixedTwo.endsWith(".00")) {
+    return "$" + price.toFixed(0);
+  } else {
+    return "$" + price.toFixed(4);
+  }
+}
+
+// Hàm cập nhật bảng
 async function updateTable() {
   const data = await fetchCryptoData();
   if (!data) return;
@@ -28,17 +49,31 @@ async function updateTable() {
     if (coinData) {
       const tr = document.createElement("tr");
       
-      // Tên coin
+      // Cột Coin: hiển thị icon và mã coin
       const tdCoin = document.createElement("td");
-      tdCoin.textContent = coinId.charAt(0).toUpperCase() + coinId.slice(1);
+      
+      // Tạo thẻ img cho icon
+      let mapping = coinMapping[coinId];
+      if (mapping && mapping.icon) {
+        const img = document.createElement("img");
+        img.src = mapping.icon;
+        img.alt = mapping.symbol;
+        img.className = "coin-icon";
+        tdCoin.appendChild(img);
+      }
+      
+      // Thêm mã coin
+      const spanCoin = document.createElement("span");
+      spanCoin.textContent = mapping ? mapping.symbol : coinId.toUpperCase();
+      tdCoin.appendChild(spanCoin);
       tr.appendChild(tdCoin);
       
-      // Giá USD
+      // Cột Giá
       const tdPrice = document.createElement("td");
-      tdPrice.textContent = "$" + coinData.usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      tdPrice.textContent = formatPrice(coinData.usd);
       tr.appendChild(tdPrice);
       
-      // % thay đổi 24h
+      // Cột % thay đổi 24h
       const tdChange = document.createElement("td");
       const change = coinData.usd_24h_change;
       tdChange.textContent = change ? change.toFixed(2) + "%" : "N/A";
@@ -55,5 +90,5 @@ async function updateTable() {
 
 // Cập nhật dữ liệu ngay khi tải trang
 updateTable();
-// Cập nhật tự động mỗi 1 phút (60,000 ms)
+// Cập nhật tự động mỗi 1 phút
 setInterval(updateTable, 60000);
