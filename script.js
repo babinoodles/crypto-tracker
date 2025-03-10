@@ -279,6 +279,17 @@ tdResult.id = "result_" + coinId;
 tdResult.className = "results-cell";
 updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
 tr.appendChild(tdResult);
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
 
 // Cập nhật toàn bộ bảng ngay khi tải trang
 updateTable();
