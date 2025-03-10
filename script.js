@@ -205,12 +205,13 @@ async function updateTable() {
         // Nếu timer đã tồn tại, xóa nó
         if (trackingTimers[coinId]) clearInterval(trackingTimers[coinId]);
         trackingTimers[coinId] = setInterval(async () => {
-          const coinUpdate = await fetchPriceForCoin(coinId);
-          if (coinUpdate) {
-            tdPrice.textContent = formatPrice(coinUpdate.usd);
-            updateEntryResult(tdResult, coinUpdate.usd, stored.entry, stored.leverage);
-          }
-        }, 10000);
+  const coinUpdate = await fetchPriceForCoin(coinId);
+  if (coinUpdate) {
+    tdPrice.textContent = formatPrice(coinUpdate.usd);
+    updateEntryResult(tdResult, coinUpdate.usd, stored.entry, stored.leverage);
+  }
+}, 1000); // 1000 ms = 1 giây
+
       } else {
         // Nếu tắt tracking, xóa timer của coin này
         if (trackingTimers[coinId]) {
