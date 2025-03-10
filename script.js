@@ -12,6 +12,9 @@ const coinMapping = {
   cardano: { symbol: "ADA", icon: "https://assets.coingecko.com/coins/images/975/small/cardano.png" }
 };
 
+// Global object để lưu timer của từng coin đang tracking
+let trackingTimers = {};
+
 // Hàm lấy dữ liệu từ CoinGecko (USD và 24h change)
 async function fetchCryptoData() {
   const ids = coins.join(",");
@@ -26,9 +29,22 @@ async function fetchCryptoData() {
   }
 }
 
+// Hàm lấy giá cập nhật cho một coin riêng (chỉ lấy giá USD)
+async function fetchPriceForCoin(coinId) {
+  const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    return data[coinId];
+  } catch (error) {
+    console.error(`Error fetching price for ${coinId}:`, error);
+    return null;
+  }
+}
+
 // Hàm định dạng giá:
-// Nếu giá là số nguyên (không có phần thập phân) thì hiển thị giá nguyên (có dấu phẩy),
-// nếu không thì hiển thị giá với 4 chữ số sau dấu chấm.
+// Nếu phần thập phân là .00 thì hiển thị giá nguyên (có dấu phẩy),
+// nếu không thì hiển thị giá với 4 số sau dấu chấm.
 function formatPrice(price) {
   if (price % 1 === 0) {
     return "$" + Number(price).toLocaleString();
@@ -40,7 +56,6 @@ function formatPrice(price) {
 // Hàm lưu dữ liệu cho một coin từ localStorage
 function loadStoredData(coinId) {
   const stored = localStorage.getItem(`coin_${coinId}`);
-  // Mặc định tracking là false nếu chưa có
   return stored ? JSON.parse(stored) : { order: "", entry: "", leverage: "", tracking: false };
 }
 
@@ -48,14 +63,14 @@ function saveStoredData(coinId, data) {
   localStorage.setItem(`coin_${coinId}`, JSON.stringify(data));
 }
 
-// Hàm cập nhật kết quả entry: nếu tracking bật và có entry, leverage hợp lệ
+// Hàm cập nhật ô "Results": chỉ hiển thị % thay đổi so với giá entry, nhân với đòn bẩy
 function updateEntryResult(td, currentPrice, entry, leverage) {
   if (entry && leverage && parseFloat(entry) > 0) {
     entry = parseFloat(entry);
     leverage = parseInt(leverage);
     let percentChange = ((currentPrice - entry) / entry) * 100;
     let leveragedChange = percentChange * leverage;
-    td.textContent = formatPrice(currentPrice) + " / " + leveragedChange.toFixed(2) + "%";
+    td.textContent = leveragedChange.toFixed(2) + "%";
     td.style.color = leveragedChange >= 0 ? "green" : "red";
   } else {
     td.textContent = "N/A";
@@ -63,8 +78,12 @@ function updateEntryResult(td, currentPrice, entry, leverage) {
   }
 }
 
-// Hàm cập nhật bảng dữ liệu
+// Hàm cập nhật bảng dữ liệu toàn cục
 async function updateTable() {
+  // Nếu có timer đang chạy, xóa chúng vì bảng sẽ được xây dựng lại
+  Object.values(trackingTimers).forEach(timerId => clearInterval(timerId));
+  trackingTimers = {}; // Reset
+  
   const data = await fetchCryptoData();
   if (!data) return;
   
@@ -82,24 +101,22 @@ async function updateTable() {
     
     // Cột 1: Coin (icon + mã)
     const tdCoin = document.createElement("td");
-   if (mapping && mapping.icon) {
-  const img = document.createElement("img");
-  img.src = mapping.icon;
-  img.alt = mapping.symbol;
-  img.className = "coin-icon";
-  // Nếu gặp lỗi tải, ẩn đi
-  img.onerror = function() {
-    this.style.display = 'none';
-  };
-  tdCoin.appendChild(img);
-}
-
+    if (mapping && mapping.icon) {
+      const img = document.createElement("img");
+      img.src = mapping.icon;
+      img.alt = mapping.symbol;
+      img.className = "coin-icon";
+      img.onerror = function() {
+        this.style.display = 'none';
+      };
+      tdCoin.appendChild(img);
+    }
     const spanCoin = document.createElement("span");
     spanCoin.textContent = mapping ? mapping.symbol : coinId.toUpperCase();
     tdCoin.appendChild(spanCoin);
     tr.appendChild(tdCoin);
     
-    // Cột 2: Giá hiện tại (USD)
+    // Cột 2: ATM Price (giá hiện tại)
     const tdPrice = document.createElement("td");
     tdPrice.textContent = formatPrice(coinData.usd);
     tr.appendChild(tdPrice);
@@ -163,7 +180,7 @@ async function updateTable() {
     tdLeverage.appendChild(inputLeverage);
     tr.appendChild(tdLeverage);
     
-    // Cột 7: Kết quả Entry (computed)
+    // Cột 7: Results (chỉ hiển thị % thay đổi so với entry, nhân với đòn bẩy)
     const tdResult = document.createElement("td");
     updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
     tr.appendChild(tdResult);
@@ -176,7 +193,6 @@ async function updateTable() {
     btnToggle.style.borderRadius = "8px";
     btnToggle.style.border = "none";
     btnToggle.style.cursor = "pointer";
-    // Đổi màu: nếu đang tracking -> màu đỏ; nếu không -> màu xanh lá
     btnToggle.style.backgroundColor = stored.tracking ? "#FF3B30" : "#34C759";
     btnToggle.style.color = "#fff";
     btnToggle.addEventListener("click", function() {
@@ -184,15 +200,33 @@ async function updateTable() {
       saveStoredData(coinId, stored);
       btnToggle.textContent = stored.tracking ? "Stop" : "Start";
       btnToggle.style.backgroundColor = stored.tracking ? "#FF3B30" : "#34C759";
-      // Cập nhật kết quả entry
-      updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
-      // Cập nhật cột Status theo sau
+      // Nếu bật tracking, khởi chạy timer cập nhật hàng này mỗi 10 giây
+      if (stored.tracking) {
+        // Nếu timer đã tồn tại, xóa nó
+        if (trackingTimers[coinId]) clearInterval(trackingTimers[coinId]);
+        trackingTimers[coinId] = setInterval(async () => {
+          const coinUpdate = await fetchPriceForCoin(coinId);
+          if (coinUpdate) {
+            tdPrice.textContent = formatPrice(coinUpdate.usd);
+            updateEntryResult(tdResult, coinUpdate.usd, stored.entry, stored.leverage);
+          }
+        }, 10000);
+      } else {
+        // Nếu tắt tracking, xóa timer của coin này
+        if (trackingTimers[coinId]) {
+          clearInterval(trackingTimers[coinId]);
+          delete trackingTimers[coinId];
+        }
+        // Cập nhật Results dựa trên dữ liệu cập nhật từ fetchCryptoData của updateTable (mỗi phút)
+        updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
+      }
+      // Cập nhật cột Status
       tdStatus.textContent = stored.tracking ? "Tracking" : "Stopped";
     });
     tdToggle.appendChild(btnToggle);
     tr.appendChild(tdToggle);
     
-    // Cột 9: Status (hiển thị trạng thái tracking)
+    // Cột 9: Status
     const tdStatus = document.createElement("td");
     tdStatus.textContent = stored.tracking ? "Tracking" : "Stopped";
     tr.appendChild(tdStatus);
@@ -206,5 +240,5 @@ async function updateTable() {
 
 // Cập nhật ngay khi tải trang
 updateTable();
-// Cập nhật tự động mỗi 1 phút
+// Cập nhật toàn bộ bảng tự động mỗi 1 phút
 setInterval(updateTable, 60000);
