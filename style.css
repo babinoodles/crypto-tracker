@@ -12,23 +12,17 @@ header {
   padding: 20px;
 }
 
-.header-content {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-}
-
 header h1 {
   margin: 0;
   font-size: 2.5rem;
   font-weight: 700;
+  color: #FFD700; /* Màu vàng gold cho tiêu đề */
 }
 
 #last-updated {
   font-size: 1rem;
   color: #A0A0A0;
+  margin-top: 4px;
 }
 
 main {
@@ -58,4 +52,10 @@ footer {
   padding: 10px;
   font-size: 0.9rem;
   color: #A0A0A0;
+}
+
+/* Một số style cho ảnh icon coin */
+.coin-icon {
+  vertical-align: middle;
+  margin-right: 6px;
 }
