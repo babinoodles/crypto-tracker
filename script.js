@@ -3,7 +3,7 @@
 // Danh sách các coin (CoinGecko ids)
 const coins = ["bitcoin", "ethereum", "ripple", "solana", "cardano"];
 
-// Mapping: chuyển từ CoinGecko id sang mã viết tắt và URL icon (sử dụng CoinGecko assets)
+// Mapping: chuyển từ CoinGecko id sang mã viết tắt và URL icon từ CoinGecko
 const coinMapping = {
   bitcoin: { symbol: "BTC", icon: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png" },
   ethereum: { symbol: "ETH", icon: "https://assets.coingecko.com/coins/images/279/small/ethereum.png" },
@@ -12,10 +12,8 @@ const coinMapping = {
   cardano: { symbol: "ADA", icon: "https://assets.coingecko.com/coins/images/975/small/cardano.png" }
 };
 
-// Global countdown (in seconds) cho timer 10s
+// Global timer countdown cho toàn trang
 let countdown = 10;
-
-// Object lưu timer của global countdown (chạy mỗi 1 giây)
 let globalTimer;
 
 // Hàm lấy dữ liệu từ CoinGecko (USD và 24h change)
@@ -31,9 +29,7 @@ async function fetchCryptoData() {
     return null;
   }
 }
-function formatPrice(price) {
-  return "$" + Number(price).toLocaleString('en-US', { maximumFractionDigits: 4 });
-}
+
 // Hàm lấy giá riêng cho một coin (chỉ USD)
 async function fetchPriceForCoin(coinId) {
   const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
@@ -48,7 +44,7 @@ async function fetchPriceForCoin(coinId) {
 }
 
 // Hàm định dạng giá:
-// Nếu giá là số nguyên (phần thập phân bằng 0) thì hiển thị với dấu phẩy;
+// Nếu giá là số nguyên (phần thập phân bằng 0) thì hiển thị với dấu phẩy,
 // nếu không, hiển thị giá với 4 chữ số sau dấu chấm.
 function formatPrice(price) {
   if (price % 1 === 0) {
@@ -99,7 +95,7 @@ async function updateTable() {
     const stored = loadStoredData(coinId);
     
     const tr = document.createElement("tr");
-    tr.dataset.coin = coinId; // Gán data-attribute để định danh
+    tr.dataset.coin = coinId; // Đánh dấu cho tiện xử lý
     
     // Cột 1: Coin (icon + mã)
     const tdCoin = document.createElement("td");
@@ -108,7 +104,9 @@ async function updateTable() {
       img.src = mapping.icon;
       img.alt = mapping.symbol;
       img.className = "coin-icon";
-      img.onerror = function() { this.style.display = 'none'; };
+      img.onerror = function() {
+        this.style.display = 'none';
+      };
       tdCoin.appendChild(img);
     }
     const spanCoin = document.createElement("span");
@@ -146,10 +144,10 @@ async function updateTable() {
     selectOrder.value = stored.order || "";
     selectOrder.addEventListener("change", function() {
       stored.order = this.value;
-      // Nếu người dùng chọn "buy" hoặc "sell" và entry trống, tự điền entry bằng giá hiện tại
+      // Nếu chọn Buy/Sell và ô entry trống, tự điền entry bằng giá hiện tại
       if ((this.value === "buy" || this.value === "sell") && !stored.entry) {
         stored.entry = coinData.usd;
-        inputEntry.value = coinData.usd; // cập nhật ô input
+        inputEntry.value = coinData.usd;
       }
       saveStoredData(coinId, stored);
       updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
@@ -207,9 +205,9 @@ async function updateTable() {
       saveStoredData(coinId, stored);
       btnToggle.textContent = stored.tracking ? "Stop" : "Start";
       btnToggle.style.backgroundColor = stored.tracking ? "#FF3B30" : "#34C759";
-      // Nếu bật tracking, khởi chạy timer cập nhật riêng cho coin này (10s)
       if (stored.tracking) {
         if (trackingTimers[coinId]) clearInterval(trackingTimers[coinId]);
+        // Khởi chạy timer riêng cho coin này với chu kỳ 10 giây
         trackingTimers[coinId] = setInterval(async () => {
           const coinUpdate = await fetchPriceForCoin(coinId);
           if (coinUpdate) {
@@ -257,27 +255,25 @@ async function updateTrackingPrices() {
   });
 }
 
-// Global timer countdown cho toàn trang (mỗi 1s cập nhật và mỗi 10s gọi updateTrackingPrices)
+// Global countdown timer cho toàn trang (đếm ngược 10s)
 function startGlobalCountdown() {
   const timerEl = document.getElementById("refresh-timer");
+  if (!timerEl) return;
   timerEl.textContent = "Next refresh in: " + countdown + "s";
   globalTimer = setInterval(async () => {
     countdown--;
     timerEl.textContent = "Next refresh in: " + countdown + "s";
     if (countdown <= 0) {
-      // Khi countdown về 0, cập nhật giá cho các coin đang tracking
       await updateTrackingPrices();
-      countdown = 10; // reset countdown
+      countdown = 10;
       timerEl.textContent = "Next refresh in: " + countdown + "s";
     }
   }, 1000);
 }
 
-// Cập nhật toàn bảng ngay khi tải trang
+// Cập nhật toàn bộ bảng ngay khi tải trang
 updateTable();
-
 // Khởi chạy global countdown timer
 startGlobalCountdown();
-
 // Cập nhật toàn bộ bảng tự động mỗi 1 phút (để cập nhật các thông tin khác)
 setInterval(updateTable, 60000);
