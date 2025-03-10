@@ -47,12 +47,15 @@ async function fetchPriceForCoin(coinId) {
 // Nếu giá là số nguyên (phần thập phân bằng 0) thì hiển thị với dấu phẩy,
 // nếu không, hiển thị giá với 4 chữ số sau dấu chấm.
 function formatPrice(price) {
-  if (price % 1 === 0) {
-    return "$" + Number(price).toLocaleString();
-  } else {
-    return "$" + Number(price.toFixed(4)).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  // Làm tròn đến 4 chữ số sau dấu chấm, sau đó loại bỏ trailing zeros
+  let str = price.toFixed(4);
+  // Loại bỏ phần ".0000" hoặc ".00" nếu không cần thiết
+  if (str.indexOf('.') !== -1) {
+    str = str.replace(/\.?0+$/, '');
   }
+  return "$" + Number(str).toLocaleString('en-US');
 }
+
 
 // Hàm lưu dữ liệu cho một coin từ localStorage
 function loadStoredData(coinId) {
