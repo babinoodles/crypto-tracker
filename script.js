@@ -273,6 +273,12 @@ function startGlobalCountdown() {
     }
   }, 1000);
 }
+// Cột 7: Results (chỉ hiển thị % thay đổi)
+const tdResult = document.createElement("td");
+tdResult.id = "result_" + coinId;
+tdResult.className = "results-cell";
+updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
+tr.appendChild(tdResult);
 
 // Cập nhật toàn bộ bảng ngay khi tải trang
 updateTable();
