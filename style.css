@@ -64,6 +64,10 @@ input[type="number"] {
   border-radius: 4px;
   width: 80px;
 }
+.results-cell {
+  font-size: 1.2rem; /* tăng 1-2 size so với cỡ mặc định, bạn có thể điều chỉnh */
+  font-weight: bold;
+}
 
 footer {
   text-align: center;
