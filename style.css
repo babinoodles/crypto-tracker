@@ -90,6 +90,18 @@ footer {
     font-size: 0.9rem;
     padding: 8px;
   }
+
+  input[type="number"] {
+  background-color: #333;
+  border: none;
+  color: #fff;
+  padding: 4px;
+  text-align: center;
+  border-radius: 4px;
+  /* Giảm width của cột Leverage */
+  width: 50px; /* hoặc 60px tùy bạn muốn */
+}
+
   
   /* Cách sắp xếp header theo hàng dọc nếu cần */
   header {
