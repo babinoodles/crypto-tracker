@@ -3,13 +3,13 @@
 // Danh sách các coin (CoinGecko ids)
 const coins = ["bitcoin", "ethereum", "ripple", "solana", "cardano"];
 
-// Mapping: chuyển từ CoinGecko id sang mã viết tắt và URL icon
+// Mapping: chuyển từ CoinGecko id sang mã viết tắt và URL icon từ CoinGecko
 const coinMapping = {
-  bitcoin: { symbol: "BTC", icon: "https://cryptoicons.org/api/icon/btc/32" },
-  ethereum: { symbol: "ETH", icon: "https://cryptoicons.org/api/icon/eth/32" },
-  ripple: { symbol: "XRP", icon: "https://cryptoicons.org/api/icon/xrp/32" },
-  solana: { symbol: "SOL", icon: "https://cryptoicons.org/api/icon/sol/32" },
-  cardano: { symbol: "ADA", icon: "https://cryptoicons.org/api/icon/ada/32" }
+  bitcoin: { symbol: "BTC", icon: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png" },
+  ethereum: { symbol: "ETH", icon: "https://assets.coingecko.com/coins/images/279/small/ethereum.png" },
+  ripple: { symbol: "XRP", icon: "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png" },
+  solana: { symbol: "SOL", icon: "https://assets.coingecko.com/coins/images/4128/small/solana.png" },
+  cardano: { symbol: "ADA", icon: "https://assets.coingecko.com/coins/images/975/small/cardano.png" }
 };
 
 // Hàm lấy dữ liệu từ CoinGecko (USD và 24h change)
@@ -27,14 +27,13 @@ async function fetchCryptoData() {
 }
 
 // Hàm định dạng giá:
-// Nếu phần thập phân là .00 thì chỉ hiển thị số nguyên,
-// nếu không, hiển thị tối đa 4 chữ số sau dấu chấm và có dấu phẩy ngăn cách phần nghìn.
+// Nếu giá là số nguyên (không có phần thập phân) thì hiển thị giá nguyên (có dấu phẩy),
+// nếu không thì hiển thị giá với 4 chữ số sau dấu chấm.
 function formatPrice(price) {
-  let fixedTwo = price.toFixed(2);
-  if (fixedTwo.endsWith(".00")) {
-    return "$" + price.toFixed(0).toLocaleString();
+  if (price % 1 === 0) {
+    return "$" + Number(price).toLocaleString();
   } else {
-    return "$" + price.toLocaleString('en-US', { maximumFractionDigits: 4 });
+    return "$" + Number(price.toFixed(4)).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
   }
 }
 
@@ -175,7 +174,7 @@ async function updateTable() {
     btnToggle.style.borderRadius = "8px";
     btnToggle.style.border = "none";
     btnToggle.style.cursor = "pointer";
-    // Đổi màu button: xanh nếu đang Start (tức chưa tracking), đỏ nếu đang Stop (tracking)
+    // Đổi màu: nếu đang tracking -> màu đỏ; nếu không -> màu xanh lá
     btnToggle.style.backgroundColor = stored.tracking ? "#FF3B30" : "#34C759";
     btnToggle.style.color = "#fff";
     btnToggle.addEventListener("click", function() {
@@ -183,7 +182,7 @@ async function updateTable() {
       saveStoredData(coinId, stored);
       btnToggle.textContent = stored.tracking ? "Stop" : "Start";
       btnToggle.style.backgroundColor = stored.tracking ? "#FF3B30" : "#34C759";
-      // Khi trạng thái thay đổi, cập nhật kết quả entry ngay
+      // Cập nhật kết quả entry
       updateEntryResult(tdResult, coinData.usd, stored.entry, stored.leverage);
       // Cập nhật cột Status theo sau
       tdStatus.textContent = stored.tracking ? "Tracking" : "Stopped";
