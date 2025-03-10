@@ -31,7 +31,9 @@ async function fetchCryptoData() {
     return null;
   }
 }
-
+function formatPrice(price) {
+  return "$" + Number(price).toLocaleString('en-US', { maximumFractionDigits: 4 });
+}
 // Hàm lấy giá riêng cho một coin (chỉ USD)
 async function fetchPriceForCoin(coinId) {
   const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
